@@ -9,6 +9,7 @@ import {
   Impact, LineUp, Bake, PastaBar, MeltsExtras, Shakes, Crowd, Meals, MeetUs, FullMenu, Visit, Footer, NeonRail,
 } from "./components/Sections.jsx";
 import { initFilm } from "./engine/film.js";
+import { whenLoaded } from "./engine/loader.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -99,6 +100,7 @@ export default function App() {
 
     const onLoad = () => ScrollTrigger.refresh();
     addEventListener("load", onLoad);
+    whenLoaded().then(() => { window.scrollTo(0, 0); ScrollTrigger.refresh(); });   // loading screen has lifted
     if (import.meta.env.DEV) { window.__lenis = lenis; window.__ST = ScrollTrigger; }
 
     return () => {

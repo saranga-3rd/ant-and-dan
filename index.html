@@ -17,8 +17,43 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Lato:wght@400;700;900&display=swap" />
     <link rel="preload" as="image" href="/img/hero.jpg" fetchpriority="high" />
+    <style>
+      /* Loading screen: inline so it paints before any script or stylesheet arrives */
+      html.is-loading, html.is-loading body { overflow: hidden; }
+      #loader {
+        position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: #07080d;
+        transition: opacity 0.7s ease 0.15s, visibility 0s linear 0.85s;
+      }
+      #loader::before {   /* soft cyan and violet glow behind the mark */
+        content: ""; position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(ellipse 45% 40% at 50% 46%, rgba(145, 40, 251, 0.16), transparent 70%),
+                    radial-gradient(ellipse 30% 25% at 50% 54%, rgba(0, 220, 252, 0.10), transparent 70%);
+      }
+      #loader.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
+      .loader__inner { position: relative; display: flex; flex-direction: column; align-items: center; width: min(78vw, 340px); }
+      .loader__mark { width: min(62vw, 250px); height: auto; margin-bottom: 38px; animation: loader-breathe 2.6s ease-in-out infinite; }
+      .loader__tube { position: relative; width: 100%; height: 4px; border-radius: 4px; background: rgba(244, 247, 248, 0.12); overflow: hidden; }
+      .loader__fill {
+        position: absolute; inset: 0; transform-origin: left center; transform: scaleX(var(--p, 0));
+        background: #00dcfc; box-shadow: 0 0 8px rgba(0, 220, 252, 0.95), 0 0 24px rgba(0, 220, 252, 0.55);
+      }
+      .loader__row { display: flex; justify-content: space-between; width: 100%; margin-top: 16px;
+        font: 900 12px/1 Lato, system-ui, sans-serif; letter-spacing: 0.22em; text-transform: uppercase; color: #8c93a6; }
+      .loader__pct { font-family: Anton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: 18px; letter-spacing: 0.06em; color: #f4f7f8; }
+      @keyframes loader-breathe { 50% { opacity: 0.82; transform: scale(1.015); } }
+      @media (prefers-reduced-motion: reduce) { .loader__mark { animation: none; } #loader { transition-duration: 0.01s; } }
+    </style>
+    <script>document.documentElement.classList.add("is-loading");</script>
+    <noscript><style>#loader { display: none; } html.is-loading, html.is-loading body { overflow: auto; }</style></noscript>
   </head>
   <body>
+    <div id="loader" role="status" aria-live="polite" aria-label="Loading Ant &amp; Dan’s">
+      <div class="loader__inner">
+        <img class="loader__mark" src="/brand/wordmark-white.png" alt="Ant &amp; Dan’s" width="250" height="84" />
+        <div class="loader__tube" aria-hidden="true"><div class="loader__fill" id="loader-fill"></div></div>
+        <div class="loader__row"><span id="loader-label">Firing up the oven</span><span class="loader__pct" id="loader-pct">0%</span></div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -3,6 +3,7 @@
 // playhead, the five beats of copy and (on phones) a crossfade between three stills.
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { track } from "./loader.js";
 
 export const STATIC_HERO_QUERY = "(max-width: 768px), (hover: none), (prefers-reduced-motion: reduce)";
 const VIDEO_W = 1280;
@@ -119,21 +120,41 @@ export function initFilm({ lenis, src = "/film.mp4" }) {
   addEventListener("resize", placeLabels);
 
   // ---------- load the film as a Blob (works on hosts without Range support) ----------
+  // The loading screen waits on this: it reports download progress (0 to 90%), then the last 10%
+  // is the browser decoding the first frame, so the screen lifts onto a sharp, ready film.
   let objectUrl = null;
+  const loadTask = isStatic ? null : track("film", 8, "Loading the film");
   if (!isStatic) {
     fetch(src)
-      .then((r) => { if (!r.ok) throw new Error(r.status); return r.blob(); })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(r.status);
+        const total = Number(r.headers.get("content-length")) || 9.8e6;
+        if (!r.body) return r.blob();
+        const reader = r.body.getReader();
+        const chunks = [];
+        let got = 0;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          got += value.length;
+          loadTask.set(Math.min(got / total, 1) * 0.9);
+        }
+        return new Blob(chunks, { type: "video/mp4" });
+      })
       .then((blob) => {
         objectUrl = URL.createObjectURL(blob);
         video.src = objectUrl;
         video.load();
+        loadTask.set(0.92);
         video.addEventListener("loadedmetadata", () => {
           lastT = -1;
           requestSeek(film.t);
           document.body.classList.add("video-ready");
         }, { once: true });
+        video.addEventListener("loadeddata", () => loadTask.done(), { once: true });   // first frame decoded
       })
-      .catch(() => document.body.classList.add("video-failed"));
+      .catch(() => { document.body.classList.add("video-failed"); loadTask.done(); });
   }
 
   const api = { film, video, trigger, get time() { return film.t; } };
